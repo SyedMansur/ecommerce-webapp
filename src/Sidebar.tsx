@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 
 const Sidebar: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const userId = user?.id;
+  const userId = user?.userId;
   const roleId = user?.roleId;
 
   return (
@@ -31,6 +31,18 @@ const Sidebar: React.FC = () => {
             })}
           >
             Product Dashboard
+          </NavLink>
+        )}
+
+        {userId && (
+          <NavLink
+            to="/orders" // ✅ Navigates to Orders screen
+            style={({ isActive }) => ({
+                ...styles.link,
+                ...(isActive ? styles.activeLink : {}),
+            })}
+          >
+            Orders
           </NavLink>
         )}
 

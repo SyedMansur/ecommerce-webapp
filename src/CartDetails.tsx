@@ -21,6 +21,10 @@ const CartDetails = () => {
     const initialCartData: CartItem[] = location.state?.cartData || [];
     const [cartData, setCartData] = useState<CartItem[]>(initialCartData);
     const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
+    const [orderMessage, setOrderMessage] = useState<string | null>(null);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    const [isOrdering, setIsOrdering] = useState(false);
 
     const [selectedItems, setSelectedItems] = useState<string[]>(() => {
         return initialCartData.flatMap(cart =>
@@ -28,9 +32,9 @@ const CartDetails = () => {
         );
     });
 
-useEffect(() => {
-  window.scrollTo(0, 0);
-}, []);
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     const handleSelect = (cartId: string, productId: string) => {
         const key = `${cartId}-${productId}`;
@@ -93,6 +97,76 @@ useEffect(() => {
         );
     };
 
+    const handleOrderNow = async () => {
+        if (selectedItems.length === 0) {
+            return setOrderMessage("Please select at least one product to order.");
+        }
+    
+        setIsOrdering(true); // Disable button during request
+    
+        const userId = user?.userId || ""; // Ensure a valid user ID
+        if (!userId) {
+            setOrderMessage("User ID not found. Please log in.");
+            return;
+        }
+    
+        const productQty: Record<number, number> = {};
+        cartData.forEach(cart => {
+            Object.entries(cart.productQty).forEach(([productId, qty]) => {
+                const key = `${cart.id}-${productId}`;
+                if (selectedItems.includes(key)) {
+                    productQty[parseInt(productId)] = qty;
+                }
+            });
+        });
+    
+        const orderRequest = { userId, productQty };
+    
+        try {
+            const response = await fetch("http://localhost:8001/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(orderRequest)
+            });
+    
+            if (!response.ok) {
+                throw new Error("Failed to place order");
+            }
+    
+            const result = await response.text();
+            setOrderMessage(result);
+            setTimeout(() => setOrderMessage(null), 3000);
+    
+            // ✅ **Remove ordered items from cart**
+            setCartData(prev =>
+                prev
+                    .map(cart => {
+                        const updatedProductQty = Object.fromEntries(
+                            Object.entries(cart.productQty).filter(([productId]) => 
+                                !selectedItems.includes(`${cart.id}-${productId}`)
+                            )
+                        );
+            
+                        return Object.keys(updatedProductQty).length > 0
+                            ? { ...cart, productQty: updatedProductQty }
+                            : undefined; // Replace null with undefined
+                    })
+                    .filter((cart): cart is CartItem => cart !== undefined) // Ensure correct filtering
+            );
+            
+    
+            // ✅ **Clear selected items since they are ordered**
+            setSelectedItems([]);
+    
+        } catch (error) {
+            console.error("Error placing order:", error);
+            setOrderMessage("Failed to place order. Please try again.");
+            setTimeout(() => setOrderMessage(null), 3000);
+        } finally {
+            setIsOrdering(false);
+        }
+    };
+    
 
     const handleDelete = async (cartId: string, productId: string, productName: string) => {
         try {
@@ -153,7 +227,13 @@ useEffect(() => {
                         <button className="close-toast" onClick={() => setDeleteMessage(null)}>✖</button>
                     </div>
                 )}
-
+                {orderMessage && (
+                    <div className="top-toast">
+                        <span className="check-icon">✔</span>
+                        <span>{orderMessage}</span>
+                        <button className="close-toast" onClick={() => setOrderMessage(null)}>✖</button>
+                    </div>
+                )}
                 {cartData.length === 0 ? (
                     <p className="empty-message">No cart details available.</p>
                 ) : (
@@ -201,8 +281,10 @@ useEffect(() => {
             {selectedItems.length > 0 && (
                 <div className="fixed-summary">
                     <p><strong>Selected Total:</strong> ₹{selectedTotal.toLocaleString()}</p>
+                    <button className="order-button" onClick={handleOrderNow}>Order Now</button>
                 </div>
             )}
+
 
 
             <style>{`
@@ -247,6 +329,24 @@ useEffect(() => {
         .product-details {
             flex: 1;
         }
+
+        .order-button {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.order-button:hover {
+    background-color: #388e3c;
+}
 
         .back-button {
             background-color: white;

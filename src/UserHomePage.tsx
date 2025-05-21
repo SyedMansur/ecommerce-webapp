@@ -42,7 +42,7 @@ const UserHomePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const userId = user?.id;
+  const userId = user?.userId;
 
   useEffect(() => {
     const getProducts = async () => {

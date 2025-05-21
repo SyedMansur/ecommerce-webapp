@@ -11,6 +11,7 @@ import Unauthorized from './Unauthorized';
 import ProtectedRoute from './ProtectedRoute';
 import CreateProductForm from './CreateProductForm';
 import UpdateProductForm from './UpdateProductForm';
+import OrderDetails from './OrderDetails';
 
 
 const App: React.FC = () => {
@@ -32,10 +33,10 @@ const App: React.FC = () => {
             }
           />
           <Route
-            path="/home"
+            path="/orders"
             element={
               <ProtectedRoute allowedRoles={[1]}>
-                <UserHomePage />
+                <OrderDetails />
               </ProtectedRoute>
             }
           />

@@ -16,7 +16,7 @@ const MainLayout = () => {
 
   const handleProfileClick = () => {
     if (user?.id) {
-      navigate(`/profile/${user.id}`);
+      navigate(`/profile/${user.userId}`);
     }
   };
 
@@ -26,7 +26,7 @@ const MainLayout = () => {
 
   const handleCartClick = async () => {
     try {
-      const response = await axios.get(`http://localhost:8001/cart/${user.id}`);
+      const response = await axios.get(`http://localhost:8001/cart/${user.userId}`);
       console.log('Cart Details:', response.data);
       navigate('/cart-details', { state: { cartData: response.data } });
     } catch (error) {
